@@ -12,7 +12,6 @@ export class ContentRepository {
       data: {
         title: dto.title,
         slug: dto.slug,
-        parentId: dto.parentId,
       },
     });
   }
@@ -39,6 +38,13 @@ export class ContentRepository {
     return this.prisma.task.update({
       where: { id: taskId },
       data: { status: 'PUBLISHED' },
+    });
+  }
+
+  getDraftTasks() {
+    return this.prisma.task.findMany({
+      where: { status: 'DRAFT' },
+      include: { topic: true },
     });
   }
 

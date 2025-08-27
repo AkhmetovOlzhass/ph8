@@ -34,6 +34,10 @@ export class ContentService {
     return task;
   }
 
+  getDraftTasks() {
+    return this.repo.getDraftTasks();
+  }
+
   getTask(taskId: string) {
     return this.repo.getTaskById(taskId);
   }

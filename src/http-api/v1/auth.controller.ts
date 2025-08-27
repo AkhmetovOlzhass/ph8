@@ -3,6 +3,7 @@ import { AuthService } from '../../modules/auth/application/auth.service';
 import { RegisterDto } from '../../modules/auth/application/dto/register.dto';
 import { LoginDto } from '../../modules/auth/application/dto/login.dto';
 import { JwtAuthGuard } from '../../modules/auth/infra/jwt-auth.guard';
+import { TokensDto } from '../../modules/auth/application/dto/token.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -18,9 +19,10 @@ export class AuthController {
     return this.authService.login(dto);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Post('refresh')
-  refresh(@Request() req) {
-    return this.authService.refresh(req.user.sub, req.user.role);
+  async refresh(
+    @Body('refreshToken') refreshToken: string,
+  ): Promise<TokensDto> {
+    return this.authService.refreshTokens(refreshToken);
   }
 }

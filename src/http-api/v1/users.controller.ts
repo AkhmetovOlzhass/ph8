@@ -18,8 +18,8 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  getProfile(@Request() req) {
-    return this.usersService.getProfile(req.user.sub);
+  async getProfile(@Request() req) {
+    return await this.usersService.getProfile(req.user.sub);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

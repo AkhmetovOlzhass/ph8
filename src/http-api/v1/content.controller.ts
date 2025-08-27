@@ -50,6 +50,13 @@ export class ContentController {
     return this.contentService.publishTask(dto.taskId);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @Get('tasks/drafts')
+  getDraftTasks() {
+    return this.contentService.getDraftTasks();
+  }
+
   @Get('tasks/:id')
   getTask(@Param('id') taskId: string) {
     return this.contentService.getTask(taskId);

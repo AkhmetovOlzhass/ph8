@@ -9,12 +9,16 @@ import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { Prisma, Role } from '@prisma/client';
+import { TokensDto } from './dto/token.dto';
+import { ConfigService, ConfigType } from '@nestjs/config';
+import jwtConfig from '../../../config/jwt.config';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -48,15 +52,34 @@ export class AuthService {
     return this.generateTokens(user.id, user.role);
   }
 
-  async refresh(userId: string, role: Role) {
-    return this.generateTokens(userId, role);
+  async refreshTokens(refreshToken: string): Promise<TokensDto> {
+    const jwtCfg = this.configService.get<ConfigType<typeof jwtConfig>>('jwt')!;
+
+    try {
+      const payload = this.jwtService.verify(refreshToken, {
+        secret: jwtCfg.refreshSecret,
+      });
+
+      return this.generateTokens(payload.sub, payload.role);
+    } catch {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
   }
 
-  private generateTokens(userId: string, role: Role) {
+  private generateTokens(userId: string, role: string): TokensDto {
+    const jwtCfg = this.configService.get<ConfigType<typeof jwtConfig>>('jwt')!;
     const payload = { sub: userId, role };
-    return {
-      accessToken: this.jwtService.sign(payload, { expiresIn: '15m' }),
-      refreshToken: this.jwtService.sign(payload, { expiresIn: '7d' }),
-    };
+
+    const accessToken = this.jwtService.sign(payload, {
+      secret: jwtCfg.secret,
+      expiresIn: jwtCfg.expiresIn,
+    });
+
+    const refreshToken = this.jwtService.sign(payload, {
+      secret: jwtCfg.refreshSecret,
+      expiresIn: jwtCfg.refreshIn,
+    });
+
+    return { accessToken, refreshToken };
   }
 }
