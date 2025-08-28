@@ -3,18 +3,46 @@ import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { CreateTaskDto } from '../application/dto/create-task.dto';
 import { CreateTopicDto } from '../application/dto/create-topic.dto';
 
+import slugify from "slugify";
+
 @Injectable()
 export class ContentRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   createTopic(dto: CreateTopicDto) {
+      const slug = slugify(dto.title, {
+    lower: true,
+    strict: true,
+    trim: true,
+  });
     return this.prisma.topic.create({
       data: {
         title: dto.title,
-        slug: dto.slug,
+        slug,
       },
     });
   }
+
+  updateTopic(id: string, dto: CreateTopicDto) {
+    const slug = slugify(dto.title, {
+      lower: true,
+      strict: true,
+      trim: true,
+    });
+    return this.prisma.topic.update({
+      where: { id },
+      data: {
+        title: dto.title,
+        slug
+      },
+    })
+  }
+
+async deleteTopic(id: string) {
+  return this.prisma.topic.delete({
+    where: { id }, 
+  })
+}
 
   getTopicById(id: string) {
     return this.prisma.topic.findUnique({ where: { id } });

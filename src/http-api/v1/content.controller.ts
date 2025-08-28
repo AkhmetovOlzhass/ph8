@@ -6,6 +6,8 @@ import {
   Param,
   UseGuards,
   Request,
+  Put,
+  Delete,
 } from '@nestjs/common';
 import { ContentService } from '../../modules/content/application/content.service';
 import { CreateTaskDto } from '../../modules/content/application/dto/create-task.dto';
@@ -22,8 +24,22 @@ export class ContentController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   @Post('topics')
-  createTopic(@Body() dto: CreateTopicDto) {
+  createTopic(@Body() dto: CreateTopicDto) {        
     return this.contentService.createTopic(dto);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @Put("topics/:id")
+  editTopic(@Param("id") id: string, @Body() dto: CreateTopicDto) {
+    return this.contentService.updateTopic(id, dto)
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("ADMIN")
+  @Delete("topics/:id")
+  deleteTopic(@Param("id") id: string) {
+    return this.contentService.deleteTopic(id)
   }
 
   @Get('topics')

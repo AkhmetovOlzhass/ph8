@@ -5,8 +5,4 @@ export class CreateTopicDto {
   @ApiProperty({ example: 'Mechanics' })
   @IsString()
   title: string;
-
-  @ApiProperty({ example: 'mechanics' })
-  @IsString()
-  slug: string;
 }

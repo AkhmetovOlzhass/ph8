@@ -26,10 +26,11 @@ export class AuthService {
 
     try {
       const user = await this.prisma.user.create({
-        data: { email: dto.email, password: hash, role: Role.USER },
+        data: { email: dto.email, password: hash, role: Role.USER, name: dto.name },
       });
       return this.generateTokens(user.id, user.role);
     } catch (error) {
+      console.error(error)
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002'

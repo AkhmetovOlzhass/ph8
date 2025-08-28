@@ -15,6 +15,14 @@ export class ContentService {
     return this.repo.createTopic(dto);
   }
 
+  updateTopic(id: string, dto: CreateTopicDto){
+    return this.repo.updateTopic(id, dto);
+  }
+
+  deleteTopic(id: string){
+    return this.repo.deleteTopic(id);
+  }
+
   getTopicById(id: string) {
     return this.repo.getTopicById(id);
   }
