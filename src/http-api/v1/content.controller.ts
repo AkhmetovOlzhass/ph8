@@ -113,7 +113,7 @@ export class ContentController {
     @Body("answer") answer: string,
     @Req() req: any
   ) {
-    const userId = req.user.sub
+    const userId = req.user.sub;
     return this.contentService.checkAnswer(taskId, userId, answer)
   }
 
