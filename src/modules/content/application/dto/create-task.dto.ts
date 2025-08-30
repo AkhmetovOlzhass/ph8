@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsEnum, IsOptional, IsArray } from 'class-validator';
-import { Difficulty } from '@prisma/client';
+import { Difficulty, AnswerType } from '@prisma/client';
 
 export class CreateTaskDto {
   @ApiProperty({ example: 'Physics basics' })
@@ -15,12 +15,19 @@ export class CreateTaskDto {
   @IsEnum(Difficulty)
   difficulty: Difficulty;
 
-  @ApiProperty({ example: ['mechanics', 'math'], required: false })
-  @IsOptional()
-  @IsArray()
-  tags?: string[];
-
   @ApiProperty({ example: 'topic-uuid-1234' })
   @IsString()
   topicId: string;
+
+  @ApiProperty({ example: '## Markdown body\nSome details...' })
+  @IsString()
+  officialSolution: string;
+
+  @ApiProperty({ example: '## Markdown body\nSome details...' })
+  @IsString()
+  correctAnswer: string;
+
+  @ApiProperty({ enum: AnswerType, example: AnswerType.TEXT })
+  @IsEnum(AnswerType)
+  answerType: AnswerType
 }

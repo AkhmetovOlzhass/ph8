@@ -8,6 +8,7 @@ import {
   Request,
   Put,
   Delete,
+  Req,
 } from '@nestjs/common';
 import { ContentService } from '../../modules/content/application/content.service';
 import { CreateTaskDto } from '../../modules/content/application/dto/create-task.dto';
@@ -52,11 +53,38 @@ export class ContentController {
     return this.contentService.getTopicById(id);
   }
 
+  @Get('tasks')
+  getAllTasks() {
+    return this.contentService.getAllTasks();
+  }
+
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   @Post('tasks')
   createTask(@Body() dto: CreateTaskDto, @Request() req) {
     return this.contentService.createTask(dto, req.user.sub);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get("tasks/progress")
+  async getUserProgress(@Req() req: any) {
+    const userId = req.user.sub;
+        console.log(userId);
+    return this.contentService.getUserProgress(userId);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @Put('tasks/:id')
+  updateTask(@Param("id") id: string, @Body() dto: CreateTaskDto) {
+    return this.contentService.updateTask(dto, id);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @Delete('tasks/:id')
+  deleteTask(@Param("id") id: string) {
+    return this.contentService.deleteTask(id);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -76,6 +104,17 @@ export class ContentController {
   @Get('tasks/:id')
   getTask(@Param('id') taskId: string) {
     return this.contentService.getTask(taskId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post("tasks/:id/submit")
+  async submitAnswer(
+    @Param("id") taskId: string,
+    @Body("answer") answer: string,
+    @Req() req: any
+  ) {
+    const userId = req.user.sub
+    return this.contentService.checkAnswer(taskId, userId, answer)
   }
 
   @Get('topics/:id/tasks')
