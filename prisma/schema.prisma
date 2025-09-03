@@ -76,6 +76,8 @@ model Task {
   correctAnswer    String?
   answerType       AnswerType @default(TEXT)
   progresses UserTaskProgress[]
+
+  imageUrl        String? 
 }
 
 enum Role {

@@ -9,7 +9,11 @@ import {
   Put,
   Delete,
   Req,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ParseFilePipeBuilder } from '@nestjs/common';
 import { ContentService } from '../../modules/content/application/content.service';
 import { CreateTaskDto } from '../../modules/content/application/dto/create-task.dto';
 import { PublishTaskDto } from '../../modules/content/application/dto/publish-task.dto';
@@ -25,22 +29,22 @@ export class ContentController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   @Post('topics')
-  createTopic(@Body() dto: CreateTopicDto) {        
+  createTopic(@Body() dto: CreateTopicDto) {
     return this.contentService.createTopic(dto);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
-  @Put("topics/:id")
-  editTopic(@Param("id") id: string, @Body() dto: CreateTopicDto) {
-    return this.contentService.updateTopic(id, dto)
+  @Put('topics/:id')
+  editTopic(@Param('id') id: string, @Body() dto: CreateTopicDto) {
+    return this.contentService.updateTopic(id, dto);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles("ADMIN")
-  @Delete("topics/:id")
-  deleteTopic(@Param("id") id: string) {
-    return this.contentService.deleteTopic(id)
+  @Roles('ADMIN')
+  @Delete('topics/:id')
+  deleteTopic(@Param('id') id: string) {
+    return this.contentService.deleteTopic(id);
   }
 
   @Get('topics')
@@ -61,29 +65,40 @@ export class ContentController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   @Post('tasks')
-  createTask(@Body() dto: CreateTaskDto, @Request() req) {
-    return this.contentService.createTask(dto, req.user.sub);
+  @UseInterceptors(FileInterceptor('image')) // ← ожидаем файл с именем "image" (необязательный)
+  createTask(
+    @Body() dto: CreateTaskDto,
+    @UploadedFile(
+      new ParseFilePipeBuilder()
+        .addMaxSizeValidator({ maxSize: 5 * 1024 * 1024 })
+        .addFileTypeValidator({ fileType: /image\/(png|jpe?g|webp|gif)$/ })
+        .build({ fileIsRequired: false }),
+    )
+    image: Express.Multer.File | undefined,
+    @Request() req: any,
+  ) {
+    return this.contentService.createTask(dto, req.user.sub, image); // передаём файл в сервис
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get("tasks/progress")
+  @Get('tasks/progress')
   async getUserProgress(@Req() req: any) {
     const userId = req.user.sub;
-        console.log(userId);
+    console.log(userId);
     return this.contentService.getUserProgress(userId);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   @Put('tasks/:id')
-  updateTask(@Param("id") id: string, @Body() dto: CreateTaskDto) {
+  updateTask(@Param('id') id: string, @Body() dto: CreateTaskDto) {
     return this.contentService.updateTask(dto, id);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   @Delete('tasks/:id')
-  deleteTask(@Param("id") id: string) {
+  deleteTask(@Param('id') id: string) {
     return this.contentService.deleteTask(id);
   }
 
@@ -107,14 +122,14 @@ export class ContentController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Post("tasks/:id/submit")
+  @Post('tasks/:id/submit')
   async submitAnswer(
-    @Param("id") taskId: string,
-    @Body("answer") answer: string,
-    @Req() req: any
+    @Param('id') taskId: string,
+    @Body('answer') answer: string,
+    @Req() req: any,
   ) {
     const userId = req.user.sub;
-    return this.contentService.checkAnswer(taskId, userId, answer)
+    return this.contentService.checkAnswer(taskId, userId, answer);
   }
 
   @Get('topics/:id/tasks')

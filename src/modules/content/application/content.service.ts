@@ -3,24 +3,26 @@ import { ContentRepository } from '../infra/content.repository';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { OutboxPublisher } from '../infra/outbox.publisher';
 import { CreateTopicDto } from './dto/create-topic.dto';
-import { ProgressStatus } from "@prisma/client";
+import { ProgressStatus } from '@prisma/client';
+import { S3StorageService } from '../../../infrastructure/storage/s3.service';
 
 @Injectable()
 export class ContentService {
   constructor(
     private readonly repo: ContentRepository,
     private readonly outbox: OutboxPublisher,
+    private readonly s3StorageService: S3StorageService,
   ) {}
 
   createTopic(dto: CreateTopicDto) {
     return this.repo.createTopic(dto);
   }
 
-  updateTopic(id: string, dto: CreateTopicDto){
+  updateTopic(id: string, dto: CreateTopicDto) {
     return this.repo.updateTopic(id, dto);
   }
 
-  deleteTopic(id: string){
+  deleteTopic(id: string) {
     return this.repo.deleteTopic(id);
   }
 
@@ -32,20 +34,36 @@ export class ContentService {
     return this.repo.getAllTopics();
   }
 
-  getAllTasks(){
+  getAllTasks() {
     return this.repo.getAllTasks();
   }
 
-  updateTask(dto: CreateTaskDto, taskId: string){
+  updateTask(dto: CreateTaskDto, taskId: string) {
     return this.repo.updateTask(dto, taskId);
   }
 
-  deleteTask(taskId: string){
+  deleteTask(taskId: string) {
     return this.repo.deleteTask(taskId);
   }
 
-  createTask(dto: CreateTaskDto, authorId: string) {
-    return this.repo.createTask(dto, authorId);
+  async createTask(
+    dto: CreateTaskDto,
+    authorId: string,
+    image?: Express.Multer.File,
+  ) {
+    let imageUrl: string | undefined;
+
+    if (image) {
+      imageUrl = await this.s3StorageService.uploadFile(image, 'tasks');
+    }
+
+    return this.repo.createTask(
+      {
+        ...dto,
+        imageUrl,
+      },
+      authorId,
+    );
   }
 
   async publishTask(taskId: string) {
@@ -65,30 +83,30 @@ export class ContentService {
 
   async checkAnswer(taskId: string, userId: string, answer: string) {
     const task = await this.repo.getTaskById(taskId);
-    if (!task) throw new NotFoundException("Task not found");
+    if (!task) throw new NotFoundException('Task not found');
 
-    let status: ProgressStatus = "IN_PROGRESS";
+    let status: ProgressStatus = 'IN_PROGRESS';
     let isCorrect = false;
 
     switch (task.answerType) {
-      case "TEXT":
+      case 'TEXT':
         isCorrect =
           task.correctAnswer?.toLowerCase().trim() ===
           answer.toLowerCase().trim();
         break;
-      case "NUMBER":
-        const correct = parseFloat(task.correctAnswer || "0");
+      case 'NUMBER':
+        const correct = parseFloat(task.correctAnswer || '0');
         const user = parseFloat(answer);
         isCorrect = Math.abs(correct - user) < 0.001;
         break;
-      case "FORMULA":
+      case 'FORMULA':
         isCorrect =
-          task.correctAnswer?.replace(/\s+/g, "") ===
-          answer.replace(/\s+/g, "");
+          task.correctAnswer?.replace(/\s+/g, '') ===
+          answer.replace(/\s+/g, '');
         break;
     }
 
-    if (isCorrect) status = "SOLVED";
+    if (isCorrect) status = 'SOLVED';
 
     const progress = await this.repo.upsertProgress(
       userId,

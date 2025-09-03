@@ -29,5 +29,9 @@ export class CreateTaskDto {
 
   @ApiProperty({ enum: AnswerType, example: AnswerType.TEXT })
   @IsEnum(AnswerType)
-  answerType: AnswerType
+  answerType: AnswerType;
+
+  @IsOptional()
+  @IsString()
+  imageUrl?: string;
 }
